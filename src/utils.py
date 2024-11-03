@@ -29,21 +29,21 @@ def read_xlsx(path_to_excel: str) -> DataFrame:
 def get_range_of_date(date: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")) -> tuple:
     """Функция принимает на вход дату и возвращает кортеж из двух дат - начало месяца и текущая дата"""
 
-    date_obj = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
-    date_end = date_obj.strftime("%d.%m.%Y %H:%M:%S")
-    date_start = date_obj.replace(day=1, hour=0, minute=0, second=0).strftime("%d.%m.%Y %H:%M:%S")
+    date_end = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+    date_start = date_end.replace(day=1, hour=0, minute=0, second=0)
 
     return date_start, date_end
 
 
-def get_card_info(df: DataFrame, date_start: str, date_end: str) -> list[dict]:
+def get_card_info(df: DataFrame, date_start: datetime, date_end: datetime) -> list[dict]:
     """
     Функция принимает DataFrame и две даты (период),
     а возвращает список словарей с данными для каждой карты,
     включающими сумму расходов и кэшбека в указанный период.
     """
 
-    df_by_date = df.loc[(df["Дата операции"].between(date_start, date_end))]
+    df_by_date = df[(pd.to_datetime(df["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+                     .between(date_start, date_end)) & (df["Сумма платежа"] < 0)]
     df_by_card = (
         df_by_date[df_by_date["Номер карты"].notna()]
         .groupby("Номер карты")
@@ -53,10 +53,10 @@ def get_card_info(df: DataFrame, date_start: str, date_end: str) -> list[dict]:
 
     cards = []
     for index, row in df_by_card.iterrows():
-        cashback = row["Сумма операции с округлением"] // 100
+        cashback = round(row["Сумма операции с округлением"] // 100)
         card_dict = {
             "last_digits": row["Номер карты"].replace("*", ""),
-            "total_spent": row["Сумма операции с округлением"],
+            "total_spent": round(row["Сумма операции с округлением"], 2),
             "cashback": cashback,
         }
         cards.append(card_dict)
@@ -64,10 +64,34 @@ def get_card_info(df: DataFrame, date_start: str, date_end: str) -> list[dict]:
     return cards
 
 
+def get_top_transactions(df: DataFrame, date_start: datetime, date_end: datetime) -> list[dict]:
+    """ """
+
+    df_by_date = df[(pd.to_datetime(df["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+                     .between(date_start, date_end)) & (df["Сумма платежа"] < 0)]
+    df_by_values = df_by_date.sort_values(by='Сумма операции с округлением', ascending=False)
+
+    top_transactions = []
+    for index, row in df_by_values.iterrows():
+        if len(top_transactions) == 5:
+            break
+        else:
+            transactions_dict = {
+                "date": row["Дата платежа"],
+                "amount": row["Сумма операции с округлением"],
+                "category": row["Категория"],
+                "description": row["Описание"]
+            }
+            top_transactions.append(transactions_dict)
+
+    return top_transactions, df_by_values
+
+
 if __name__ == "__main__":
     path = "../data/operations.xlsx"
     transactions = read_xlsx(path)
-    date_1, date_2 = get_range_of_date()
+    date_1, date_2 = get_range_of_date("2020-03-2 12:00:00")
+    print(date_1, date_2)
     print((hello_user()))
     print(get_card_info(transactions, date_1, date_2))
-    print(transactions["Номер карты"][1].replace("*", ""))
+    print(get_top_transactions(transactions, date_1, date_2))
