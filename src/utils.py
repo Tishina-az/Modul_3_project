@@ -33,7 +33,7 @@ def read_xlsx(path_to_excel: str) -> DataFrame:
     return data
 
 
-def get_range_of_date(date: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")) -> tuple:
+def get_range_of_date(date: str) -> tuple:
     """Функция принимает на вход дату и возвращает кортеж из двух дат - начало месяца и текущая дата"""
 
     date_end = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
