@@ -1,6 +1,8 @@
+import json
 from datetime import datetime
 
 import pandas as pd
+import requests
 from pandas import DataFrame
 
 
@@ -77,21 +79,47 @@ def get_top_transactions(df: DataFrame, date_start: datetime, date_end: datetime
             break
         else:
             transactions_dict = {
-                "date": row["Дата платежа"],
+                "date": row["Дата операции"][:10],
                 "amount": row["Сумма операции с округлением"],
                 "category": row["Категория"],
                 "description": row["Описание"]
             }
             top_transactions.append(transactions_dict)
 
-    return top_transactions, df_by_values
+    return top_transactions
+
+
+def current_exchange_rate(path_to_json: str):
+    """ """
+
+    with open(path_to_json) as f:
+        data_cur = json.load(f)
+    currency_list = data_cur.get("user_currencies")
+
+    currency_rates = []
+    response = requests.get(f'https://www.cbr-xml-daily.ru/daily_json.js')
+    if response.status_code != 200:
+        raise ValueError(f"Failed to get currency rate")
+    data = response.json()
+    for currency in currency_list:
+        currency_data = data["Valute"].get(currency)
+        currency_rates.append({
+            "currency": currency,
+            "rate": round(currency_data["Value"], 2 )
+        })
+        if not currency_data:
+            raise ValueError(f"No data for currency {currency}")
+
+    return currency_rates
 
 
 if __name__ == "__main__":
     path = "../data/operations.xlsx"
+    path_json = "../user_settings.json"
     transactions = read_xlsx(path)
     date_1, date_2 = get_range_of_date("2020-03-2 12:00:00")
     print(date_1, date_2)
     print((hello_user()))
     print(get_card_info(transactions, date_1, date_2))
     print(get_top_transactions(transactions, date_1, date_2))
+    print(current_exchange_rate(path_json))
