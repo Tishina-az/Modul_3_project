@@ -42,7 +42,7 @@ def get_range_of_date(date: str) -> tuple:
     return date_start, date_end
 
 
-def get_card_info(df: DataFrame, date_start: datetime, date_end: datetime) -> list[dict]:
+def get_card_info(df: pd.DataFrame, date_start: datetime, date_end: datetime) -> list[dict]:
     """
     Функция принимает DataFrame и две даты (период),
     а возвращает список словарей с данными для каждой карты,
@@ -73,7 +73,7 @@ def get_card_info(df: DataFrame, date_start: datetime, date_end: datetime) -> li
     return cards
 
 
-def get_top_transactions(df: DataFrame, date_start: datetime, date_end: datetime) -> list[dict]:
+def get_top_transactions(df: pd.DataFrame, date_start: datetime, date_end: datetime) -> list[dict]:
     """ """
 
     df_by_date = df[

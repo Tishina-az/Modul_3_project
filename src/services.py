@@ -1,13 +1,12 @@
 import json
 
 import pandas as pd
-from pandas import DataFrame
 
 from src.utils import read_xlsx
 
 
-def analysis_cashback(data: DataFrame, year: int, month: int) -> str:
-    """ """
+def analysis_cashback(data: pd.DataFrame, year: int, month: int) -> str:
+    """Функция принимает файл, год и месяц, и выдает анализ кэшбека по категориям в виде json-ответа"""
 
     df_by_date = data[
         (pd.to_datetime(data["Дата операции"], format="%d.%m.%Y %H:%M:%S").dt.year == year)
@@ -28,4 +27,4 @@ def analysis_cashback(data: DataFrame, year: int, month: int) -> str:
 if __name__ == "__main__":
     path_to_file = "../data/operations.xlsx"
     transactions = read_xlsx(path_to_file)
-    print(analysis_cashback(transactions, 2021, 4))
+    print(analysis_cashback(transactions, 2018, 6))
