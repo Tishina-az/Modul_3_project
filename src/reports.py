@@ -1,7 +1,8 @@
+import logging
 import os
 from datetime import datetime
 from functools import wraps
-from typing import Optional
+from typing import Optional, Callable, Any
 
 import pandas as pd
 
@@ -9,39 +10,52 @@ from src.utils import read_xlsx
 
 path_to_csv = os.path.join(os.path.dirname(__file__), "../data/example.csv")
 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s:%(levelname)s:%(filename)s:%(funcName)s: %(message)s",
+    filename=os.path.join(os.path.dirname(__file__), "../logs/reports.log"),
+    filemode="a",
+)
 
-def writing_report_to_file(file_name):
-    def wrapper(function):
+rep_logger = logging.getLogger()
+
+
+def writing_report_to_file(file_name: str) -> Callable:
+    def wrapper(function: Callable) -> Callable:
         @wraps(function)
-        def inner(*args, **kwargs):
+        def inner(*args: Any, **kwargs: Any) -> Any:
             result = function(*args, **kwargs)
             result.to_csv(file_name, index=False)
+            rep_logger.debug("Запись результата в файл.")
             return result
-
         return inner
-
     return wrapper
 
 
 @writing_report_to_file(path_to_csv)
-def spending_by_category(transactions: pd.DataFrame, category: str, date: Optional[str] = None) -> pd.DataFrame:
+def spending_by_category(transactions: pd.DataFrame, category: str, date: Any=None) -> pd.DataFrame:
     """Функция возвращает траты по заданной категории за последние три месяца (от переданной даты)."""
 
+    rep_logger.info("Запуск функции...")
     if date is None:
+        rep_logger.warning("Получение текущей даты.")
         date = datetime.now("%Y-%m-%d %H:%M:%S")
     else:
+        rep_logger.warning("Получение даты пользователя.")
         date = pd.to_datetime(date, format="%Y-%m-%d %H:%M:%S")
 
     date_start = date - pd.DateOffset(months=3)
 
+    rep_logger.debug("Формирование отчета по транзакциям.")
     df_by_date_category = transactions[
         (pd.to_datetime(transactions["Дата операции"], format="%d.%m.%Y %H:%M:%S").between(date_start, date))
         & (transactions["Категория"] == category)
     ]
 
+    rep_logger.info("Функция успешно завершена.")
     return df_by_date_category
 
 
 if __name__ == "__main__":
     data = read_xlsx("../data/operations.xlsx")
-    spending_by_category(data, "Супермаркеты", "2021-12-04 13:44:39")
+    print(spending_by_category(data, "Супермаркеты", "2021-06-04 13:44:39"))

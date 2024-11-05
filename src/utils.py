@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from datetime import datetime
 
@@ -10,27 +11,47 @@ from pandas import DataFrame
 load_dotenv()
 api_stock = os.getenv("API_KEY_STOCK")
 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s:%(levelname)s:%(filename)s:%(funcName)s: %(message)s",
+    filename=os.path.join(os.path.dirname(__file__), "../logs/utils.log"),
+    filemode="a",
+)
+
+utils_logger = logging.getLogger()
+
 
 def hello_user() -> str:
     """Функция формирует приветствие в зависимости от текущего времени суток"""
+
+    utils_logger.info("Запуск функции...")
     current_time = datetime.now().strftime("%H:%M:%S")
 
+    greeting = ""
     if "06:00:00" <= current_time <= "11:59:59":
-        return "Доброе утро!"
+        greeting += "Доброе утро!"
     elif "12:00:00" <= current_time <= "17:59:59":
-        return "Добрый день!"
+        greeting += "Добрый день!"
     elif "18:00:00" <= current_time <= "20:59:59":
-        return "Добрый вечер!"
+        greeting += "Добрый вечер!"
     else:
-        return "Доброй ночи!"
+        greeting += "Доброй ночи!"
+
+    utils_logger.info("Успешное завершение работы!")
+    return greeting
 
 
 def read_xlsx(path_to_excel: str) -> DataFrame:
     """Функция читает файл excel и возвращает DataFrame"""
 
-    data = pd.read_excel(path_to_excel)
-
-    return data
+    utils_logger.info("Запуск функции...")
+    try:
+        data = pd.read_excel(path_to_excel)
+        utils_logger.info("Файл успешно прочитан!")
+        return data
+    except Exception as e:
+        utils_logger.error(f"При чтении файла возникла ошибка - {e}.")
+        raise Exception(f"При чтении файла возникла ошибка - {e}.")
 
 
 def get_range_of_date(date: str) -> tuple:
@@ -38,6 +59,7 @@ def get_range_of_date(date: str) -> tuple:
 
     date_end = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
     date_start = date_end.replace(day=1, hour=0, minute=0, second=0)
+    utils_logger.info("Функция успешно завершилась!")
 
     return date_start, date_end
 
@@ -49,10 +71,11 @@ def get_card_info(df: pd.DataFrame, date_start: datetime, date_end: datetime) ->
     включающими сумму расходов и кэшбека в указанный период.
     """
 
+    utils_logger.info("Запуск функции...")
     df_by_date = df[
         (pd.to_datetime(df["Дата операции"], format="%d.%m.%Y %H:%M:%S").between(date_start, date_end))
         & (df["Сумма платежа"] < 0)
-    ]
+        ]
     df_by_card = (
         df_by_date[df_by_date["Номер карты"].notna()]
         .groupby("Номер карты")
@@ -70,16 +93,18 @@ def get_card_info(df: pd.DataFrame, date_start: datetime, date_end: datetime) ->
         }
         cards.append(card_dict)
 
+    utils_logger.info("Успешное завершение функции!")
     return cards
 
 
 def get_top_transactions(df: pd.DataFrame, date_start: datetime, date_end: datetime) -> list[dict]:
-    """ """
+    """ Функция, возвращает топ-5 транзакций по сумме платежа """
 
+    utils_logger.info("Запуск функции...")
     df_by_date = df[
         (pd.to_datetime(df["Дата операции"], format="%d.%m.%Y %H:%M:%S").between(date_start, date_end))
         & (df["Сумма платежа"] < 0)
-    ]
+        ]
     df_by_values = df_by_date.sort_values(by="Сумма операции с округлением", ascending=False)
 
     top_transactions = []
@@ -95,20 +120,26 @@ def get_top_transactions(df: pd.DataFrame, date_start: datetime, date_end: datet
             }
             top_transactions.append(transactions_dict)
 
+    utils_logger.info("Успешное завершение функции!")
     return top_transactions
 
 
 def current_exchange_rate(path_to_json: str) -> list[dict]:
     """Функция принимает путь до файла со списком валют и возвращает список с текущим курсом"""
 
+    utils_logger.info("Запуск функции...")
+    utils_logger.warning("Чтение файла json.")
     with open(path_to_json) as f:
         data_cur = json.load(f)
     currency_list = data_cur.get("user_currencies")
 
     currency_rates = []
     response = requests.get("https://www.cbr-xml-daily.ru/daily_json.js")
-    if response.status_code != 200:
-        raise ValueError("Ошибка при получении текущего курса валют!")
+    status_code = response.status_code
+    if status_code != 200:
+        utils_logger.error(f"Ошибка {status_code}, при обращении к API.")
+        raise ValueError(f"Ошибка {status_code} при получении текущего курса валют!")
+    utils_logger.info("Данные от API получены.")
     data = response.json()
     for currency in currency_list:
         currency_data = data["Valute"].get(currency)
@@ -116,12 +147,15 @@ def current_exchange_rate(path_to_json: str) -> list[dict]:
         if not currency_data:
             raise ValueError(f"Не найдены данные для валюты: {currency}!")
 
+    utils_logger.info("Успешное завершение функции!")
     return currency_rates
 
 
 def current_values_stocks(path_to_json: str) -> list[dict]:
     """Функция принимает путь к списку тикеров акция и возвращает списко словарей со стоимостью"""
 
+    utils_logger.info("Запуск функции...")
+    utils_logger.warning("Чтение файла json.")
     with open(path_to_json) as f:
         data_st = json.load(f)
     stocks_list = data_st.get("user_stocks")
@@ -130,7 +164,14 @@ def current_values_stocks(path_to_json: str) -> list[dict]:
     for stock in stocks_list:
         url = f"https://financialmodelingprep.com/api/v3/quote/{stock}?apikey={api_stock}"
         response = requests.get(url)
-        data = response.json()
-        stock_prices.append({"stock": stock, "price": data[0]["price"]})
+        status_code = response.status_code
+        if status_code != 200:
+            utils_logger.error(f"Ошибка {status_code}, при обращении к API.")
+            raise ValueError(f"Ошибка {status_code}, попробуйте ещё раз!")
+        else:
+            utils_logger.info("Данные от API получены.")
+            data = response.json()
+            stock_prices.append({"stock": stock, "price": data[0]["price"]})
 
+    utils_logger.info("Успешное завершение функции!")
     return stock_prices
