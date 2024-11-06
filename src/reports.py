@@ -7,7 +7,8 @@ from typing import Callable, Any
 import pandas as pd
 
 
-path_to_csv = os.path.join(os.path.dirname(__file__), "../data/example.csv")
+# path_to_csv = os.path.join(os.path.dirname(__file__), "../data/example.csv")
+path_to_json = os.path.join(os.path.dirname(__file__), "../data/example.json")
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -24,7 +25,8 @@ def writing_report_to_file(file_name: str) -> Callable:
         @wraps(function)
         def inner(*args: Any, **kwargs: Any) -> Any:
             result = function(*args, **kwargs)
-            result.to_csv(file_name, index=False)
+            # result.to_csv(file_name, index=False)
+            result.to_json(file_name, orient='records', force_ascii=False, indent=4)
             rep_logger.debug("Запись результата в файл.")
             return result
 
@@ -33,7 +35,7 @@ def writing_report_to_file(file_name: str) -> Callable:
     return wrapper
 
 
-@writing_report_to_file(path_to_csv)
+@writing_report_to_file(path_to_json)
 def spending_by_category(transactions: pd.DataFrame, category: str, date: Any = None) -> pd.DataFrame:
     """Функция возвращает траты по заданной категории за последние три месяца (от переданной даты)."""
 
