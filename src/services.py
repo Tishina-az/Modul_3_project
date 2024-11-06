@@ -4,7 +4,6 @@ import os
 
 import pandas as pd
 
-from src.utils import read_xlsx
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -36,9 +35,3 @@ def analysis_cashback(data: pd.DataFrame, year: int, month: int) -> str:
 
     serv_logger.info("Успешное завершение выполнения функции.")
     return json.dumps(category_cashback, ensure_ascii=False, indent=4)
-
-
-if __name__ == "__main__":
-    path_to_file = "../data/operations.xlsx"
-    transactions = read_xlsx(path_to_file)
-    print(analysis_cashback(transactions, 2018, 6))

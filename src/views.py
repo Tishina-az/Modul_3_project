@@ -35,8 +35,3 @@ def main_page(date: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")) -> str:
         return json.dumps(data, ensure_ascii=False, indent=4)
     except Exception as e:
         return f"Возникла ошибка - {e}."
-
-
-if __name__ == "__main__":
-    print(main_page("2018-12-12 12:00:00"))
-    print(current_values_stocks(path_to_json))

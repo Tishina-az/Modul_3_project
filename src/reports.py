@@ -6,7 +6,6 @@ from typing import Callable, Any
 
 import pandas as pd
 
-from src.utils import read_xlsx
 
 path_to_csv = os.path.join(os.path.dirname(__file__), "../data/example.csv")
 
@@ -41,7 +40,7 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Any = 
     rep_logger.info("Запуск функции...")
     if date is None:
         rep_logger.warning("Получение текущей даты.")
-        date = datetime.now("%Y-%m-%d %H:%M:%S")
+        date = datetime.now()
     else:
         rep_logger.warning("Получение даты пользователя.")
         date = pd.to_datetime(date, format="%Y-%m-%d %H:%M:%S")
@@ -56,8 +55,3 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Any = 
 
     rep_logger.info("Функция успешно завершена.")
     return df_by_date_category
-
-
-if __name__ == "__main__":
-    data = read_xlsx("../data/operations.xlsx")
-    print(spending_by_category(data, "Супермаркеты", "2021-06-04 13:44:39"))
