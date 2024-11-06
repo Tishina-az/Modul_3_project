@@ -19,7 +19,7 @@ def sample_dataframe():
         ],
         "Номер карты": ["*5678", "*5678", "*5432", "*5678", "*5432", "*5678"],
         "Сумма платежа": [-150.00, -200.00, -50.00, -100.00, -300.00, -50.00],
-        "Сумма операции с округлением": [-150.00, -200.00, -50.00, -100.00, -300.00, -50.00],
+        "Сумма операции с округлением": [150.00, 200.00, 50.00, 100.00, 300.00, 50.00],
         "Категория": ["Еда", "Транспорт", "Развлечения", "Еда", "Транспорт", "Развлечения"],
         "Описание": [
             "Обед в кафе",
@@ -44,19 +44,19 @@ def sample_empty_dataframe():
 @pytest.fixture
 def list_cards():
     return [
-        {"last_digits": "5432", "total_spent": -350.0, "cashback": -4},
-        {"last_digits": "5678", "total_spent": -450.0, "cashback": -5},
+        {"last_digits": "5432", "total_spent": 350.0, "cashback": 3},
+        {"last_digits": "5678", "total_spent": 450.0, "cashback": 4},
     ]
 
 
 @pytest.fixture
 def list_top_transactions():
     return [
-        {"date": "12.10.2023", "amount": -50.0, "category": "Развлечения", "description": "Билеты в кино"},
-        {"date": "15.10.2023", "amount": -100.0, "category": "Еда", "description": "Ужин в ресторане"},
-        {"date": "05.10.2023", "amount": -150.0, "category": "Еда", "description": "Обед в кафе"},
-        {"date": "10.10.2023", "amount": -200.0, "category": "Транспорт", "description": "Поездка на такси"},
-        {"date": "20.10.2023", "amount": -300.0, "category": "Транспорт", "description": "Поездка на автобусе"},
+        {'date': '20.10.2023', 'amount': 300.0, 'category': 'Транспорт', 'description': 'Поездка на автобусе'},
+        {'date': '10.10.2023', 'amount': 200.0, 'category': 'Транспорт', 'description': 'Поездка на такси'},
+        {'date': '05.10.2023', 'amount': 150.0, 'category': 'Еда', 'description': 'Обед в кафе'},
+        {'date': '15.10.2023', 'amount': 100.0, 'category': 'Еда', 'description': 'Ужин в ресторане'},
+        {'date': '12.10.2023', 'amount': 50.0, 'category': 'Развлечения', 'description': 'Билеты в кино'}
     ]
 
 
