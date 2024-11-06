@@ -1,8 +1,15 @@
 import json
 from datetime import datetime
 
-from src.utils import (current_exchange_rate, current_values_stocks, get_card_info, get_range_of_date,
-                       get_top_transactions, hello_user, read_xlsx)
+from src.utils import (
+    current_exchange_rate,
+    current_values_stocks,
+    get_card_info,
+    get_range_of_date,
+    get_top_transactions,
+    hello_user,
+    read_xlsx,
+)
 
 path_to_file = "../data/operations.xlsx"
 path_to_json = "../user_settings.json"
@@ -26,9 +33,10 @@ def main_page(date: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")) -> str:
         }
 
         return json.dumps(data, ensure_ascii=False, indent=4)
-    except ValueError:
-        return "Неверный формат даты! Введите дату в формате: YYYY-MM-DD HH:MM:SS"
+    except Exception as e:
+        return f"Возникла ошибка - {e}."
 
 
 if __name__ == "__main__":
-    print(main_page("2018-06-18 18:45:00"))
+    print(main_page("2018-12-12 12:00:00"))
+    print(current_values_stocks(path_to_json))

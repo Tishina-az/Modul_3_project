@@ -25,14 +25,14 @@ def hello_user() -> str:
     """Функция формирует приветствие в зависимости от текущего времени суток"""
 
     utils_logger.info("Запуск функции...")
-    current_time = datetime.now().strftime("%H:%M:%S")
-
+    current_time = datetime.now()
+    current_hour = current_time.hour
     greeting = ""
-    if "06:00:00" <= current_time <= "11:59:59":
+    if 6 <= current_hour < 12:
         greeting += "Доброе утро!"
-    elif "12:00:00" <= current_time <= "17:59:59":
+    elif 12 <= current_hour < 18:
         greeting += "Добрый день!"
-    elif "18:00:00" <= current_time <= "20:59:59":
+    elif 18 <= current_hour < 21:
         greeting += "Добрый вечер!"
     else:
         greeting += "Доброй ночи!"
@@ -54,14 +54,18 @@ def read_xlsx(path_to_excel: str) -> DataFrame:
         raise Exception(f"При чтении файла возникла ошибка - {e}.")
 
 
-def get_range_of_date(date: str) -> tuple:
+def get_range_of_date(date: str = None) -> tuple:
     """Функция принимает на вход дату и возвращает кортеж из двух дат - начало месяца и текущая дата"""
 
-    date_end = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
-    date_start = date_end.replace(day=1, hour=0, minute=0, second=0)
-    utils_logger.info("Функция успешно завершилась!")
-
-    return date_start, date_end
+    try:
+        date_end = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+        date_start = date_end.replace(day=1, hour=0, minute=0, second=0)
+        utils_logger.info("Функция успешно завершилась!")
+        return date_start, date_end
+    except ValueError as e:
+        utils_logger.error(f"Возникла ошибка ValueError - {e}. Проверьте корректность ввода даты!")
+        print("Неверный формат даты! Введите дату в формате: YYYY-MM-DD HH:MM:SS")
+        return ()
 
 
 def get_card_info(df: pd.DataFrame, date_start: datetime, date_end: datetime) -> list[dict]:
@@ -75,7 +79,7 @@ def get_card_info(df: pd.DataFrame, date_start: datetime, date_end: datetime) ->
     df_by_date = df[
         (pd.to_datetime(df["Дата операции"], format="%d.%m.%Y %H:%M:%S").between(date_start, date_end))
         & (df["Сумма платежа"] < 0)
-        ]
+    ]
     df_by_card = (
         df_by_date[df_by_date["Номер карты"].notna()]
         .groupby("Номер карты")
@@ -98,13 +102,13 @@ def get_card_info(df: pd.DataFrame, date_start: datetime, date_end: datetime) ->
 
 
 def get_top_transactions(df: pd.DataFrame, date_start: datetime, date_end: datetime) -> list[dict]:
-    """ Функция, возвращает топ-5 транзакций по сумме платежа """
+    """Функция, возвращает топ-5 транзакций по сумме платежа"""
 
     utils_logger.info("Запуск функции...")
     df_by_date = df[
         (pd.to_datetime(df["Дата операции"], format="%d.%m.%Y %H:%M:%S").between(date_start, date_end))
         & (df["Сумма платежа"] < 0)
-        ]
+    ]
     df_by_values = df_by_date.sort_values(by="Сумма операции с округлением", ascending=False)
 
     top_transactions = []
@@ -143,9 +147,10 @@ def current_exchange_rate(path_to_json: str) -> list[dict]:
     data = response.json()
     for currency in currency_list:
         currency_data = data["Valute"].get(currency)
-        currency_rates.append({"currency": currency, "rate": round(currency_data["Value"], 2)})
         if not currency_data:
             raise ValueError(f"Не найдены данные для валюты: {currency}!")
+        else:
+            currency_rates.append({"currency": currency, "rate": round(currency_data["Value"], 2)})
 
     utils_logger.info("Успешное завершение функции!")
     return currency_rates

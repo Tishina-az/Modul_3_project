@@ -2,7 +2,7 @@ import logging
 import os
 from datetime import datetime
 from functools import wraps
-from typing import Optional, Callable, Any
+from typing import Callable, Any
 
 import pandas as pd
 
@@ -28,12 +28,14 @@ def writing_report_to_file(file_name: str) -> Callable:
             result.to_csv(file_name, index=False)
             rep_logger.debug("Запись результата в файл.")
             return result
+
         return inner
+
     return wrapper
 
 
 @writing_report_to_file(path_to_csv)
-def spending_by_category(transactions: pd.DataFrame, category: str, date: Any=None) -> pd.DataFrame:
+def spending_by_category(transactions: pd.DataFrame, category: str, date: Any = None) -> pd.DataFrame:
     """Функция возвращает траты по заданной категории за последние три месяца (от переданной даты)."""
 
     rep_logger.info("Запуск функции...")
